@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EDEAE2; --panel:#FFFFFF; --panel-alt:#F5F2ED; --panel-alt2:#F8F7F4; --dash-bg:#F0F1F4;
+    --navy:#0A2540; --navy2:#173a5e; --text:#0A2540; --text-soft:rgba(10,37,64,0.55); --text-softer:rgba(10,37,64,0.45);
+    --border:rgba(10,37,64,0.08); --border2:rgba(10,37,64,0.15);
+    --terracotta:#C36B4E; --amber:#D98E2B; --green:#3FA672; --red:#D9584F;
+    --input-bg:#F8F7F4; --card-shadow:0 2px 10px rgba(10,37,64,0.05);
+  }
+  [data-theme="dark"]{
+    --bg:#041B2D; --panel:#0B3B5C; --panel-alt:#0A3355; --panel-alt2:#0A3355; --dash-bg:#031525;
+    --navy:#00121F; --navy2:#0B3B5C; --text:#F3F6F8; --text-soft:rgba(243,246,248,0.65); --text-softer:rgba(243,246,248,0.48);
+    --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.16);
+    --terracotta:#D98164; --amber:#E4A24A; --green:#4FBE84; --red:#E4685C;
+    --input-bg:#0A3355; --card-shadow:0 2px 12px rgba(0,0,0,0.35);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,sans-serif;background:var(--bg);}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:rgba(128,128,128,0.25);border-radius:4px;}
+  input[type=range].mzRange{-webkit-appearance:none;appearance:none;height:6px;border-radius:4px;background:var(--border2);outline:none;}
+  input[type=range].mzRange::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--terracotta);cursor:pointer;border:3px solid var(--panel);box-shadow:0 1px 4px rgba(0,0,0,0.3);}
+  input.mzText{width:100%;border:1px solid var(--border2);border-radius:10px;padding:11px 14px;font-size:13px;font-family:inherit;color:var(--text);outline:none;background:var(--panel);}
+  input.mzText:focus{border-color:var(--terracotta);}
+
+  .modeSwitch{position:sticky;top:0;z-index:100;background:var(--navy);display:flex;gap:8px;padding:12px 16px;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+  .modeGroup{display:flex;gap:8px;}
+  .modeBtn{border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.7);border-radius:20px;padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .modeBtn.active{background:var(--terracotta);color:#fff;border-color:var(--terracotta);}
+  .ctrlBtn{border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.06);color:#fff;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+
+  .iosDevice{width:402px;height:874px;border-radius:48px;overflow:hidden;position:relative;background:#000;box-shadow:0 40px 80px rgba(0,0,0,0.18),0 0 0 1px rgba(0,0,0,0.12);flex-shrink:0;}
+  .iosIsland{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:126px;height:37px;border-radius:24px;background:#000;z-index:50;}
+  .iosHome{position:absolute;bottom:0;left:0;right:0;z-index:60;height:34px;display:flex;justify-content:center;align-items:flex-end;padding-bottom:8px;pointer-events:none;}
+  .iosHome div{width:139px;height:5px;border-radius:100px;background:rgba(255,255,255,0.7);}
+  .iosScreen{height:100%;display:flex;flex-direction:column;overflow:hidden;}
+
+  .errMsg{color:var(--red);font-size:11.5px;font-weight:600;margin-top:6px;display:flex;align-items:center;gap:5px;}
+</style>
+</head>
+<body id="pageBody">
+
+<div class="modeSwitch">
+  <div class="modeGroup">
+    <div style="color:#fff;font-weight:700;font-size:13px;padding:8px 4px;">معاون · Muawen</div>
+  </div>
+  <div class="modeGroup">
+    <button class="ctrlBtn" id="langBtn" onclick="toggleLang()"></button>
+    <button class="ctrlBtn" id="themeBtn" onclick="toggleTheme()"></button>
+  </div>
+</div>
+
+
+<div id="dashView" style="min-height:100vh;background:var(--dash-bg);">
+  <div id="dashInner" style="display:flex;min-height:100vh;min-width:1440px;"></div>
+</div>
+
+<script>
+/* ============================================================
+   I18N DICTIONARY
+   ============================================================ */
+const L = {
+ar: {
+  dir:'rtl', langBtnLabel:'English', themeLight:'الوضع الليلي', themeDark:'الوضع النهاري',
+  mobileTagline:'مساعد مصرفي بالذكاء الاصطناعي — ثلاثة سيناريوهات تفاعلية',
+  scenario1:'تنبيه إنفاق استباقي', scenario2:'محاكي القرار المالي', scenario3:'كشف الاحتيال والحل الفوري',
+  typeMsg:'اكتب رسالتك...',
+  s1greet:'مرحباً بسام، لاحظت شيئاً يستحق انتباهك هذا الشهر.',
+  s1title:'تنبيه إنفاق', s1sub:'المطاعم · هذا الشهر',
+  s1body1:'صرفت هذا الشهر', s1body2:'ر.س على المطاعم، بزيادة', s1body3:'عن الشهر الماضي.',
+  lastMonth:'الشهر الماضي', thisMonth:'هذا الشهر',
+  s1detailTitle:'تفاصيل الإنفاق — المطاعم', catDining:'مطاعم', catShopping:'تسوق', catEnt:'ترفيه', catTransport:'مواصلات',
+  budgetBtn:'ساعدني في الميزانية', detailShow:'عرض التفاصيل', detailHide:'إخفاء التفاصيل',
+  s1assistantNote:'معاون: صرفك زاد', s1assistantNote2:'عن الشهر الماضي على المطاعم. أقترح ضبط ميزانية شهرية.',
+  s1planMsg:'تمام! يمكنني إنشاء خطة ميزانية شهرية تنبهك تلقائياً عند اقتراب الحد.',
+  s1capLabel:'حدد سقف الإنفاق الشهري على المطاعم', s1activate:'تفعيل الخطة',
+  s1planActive:'تم تفعيل خطة الميزانية', s1planActiveCap:'تم تفعيل خطة بسقف', s1planActiveCap2:'ر.س شهرياً',
+  loanQ:'أبغى أعرف قد ايش أقدر أقترض قرض شخصي', loanQamt:'100,000', loanQcur:'ريال',
+  loanA:'تمام، درست وضعك المالي الحالي. هذا تحليل سريع للقسط المتوقع:',
+  loanSimTitle:'محاكي القرار', highApproval:'نسبة موافقة عالية',
+  incomeLbl:'الدخل الشهري', fixedLbl:'الالتزامات الثابتة', installLbl48:'القسط الجديد (٤٨ شهر)', installLbl:'القسط', remainLbl:'الرصيد المتبقي', remainLbl2:'المتبقي',
+  loanAmtLbl:'مبلغ القرض', applyBtn:'تقديم الطلب', adjustBtn:'تعديل المبلغ',
+  loanApplied1:'تم استلام طلبك رقم', loanApplied2:'القرار خلال ٣ دقائق.', loanAppliedShort:'تم استلام الطلب رقم',
+  fraudTitle:'رصدنا عملية مشبوهة', fraudCard:'قبل دقيقتين',
+  fraudBody1:'عملية بقيمة', fraudBody2:'ر.س من متجر غير معروف باستخدام بطاقتك.',
+  disputeBtn:'لم أقم بهذه العملية', confirmBtn:'هذه عملية صحيحة', confirmBtnShort:'عملية صحيحة',
+  disputeReplyUser:'لم أقم بهذه العملية', disputeReplyBot:'جارٍ اتخاذ الإجراءات اللازمة على البطاقة — يمكنك متابعة الخطوات في بطاقة التنبيه على اللوحة.',
+  actionTaken:'تم اتخاذ الإجراء', frozenNow:'تم تجميد بطاقتك فوراً', caseOpened:'تم فتح بلاغ تحقيق', replacementOnWay:'بطاقة بديلة في الطريق',
+  caseNumLbl:'رقم البلاغ', confirmedReplyUser:'هذه عملية صحيحة', confirmedReplyBot:'شكراً لتأكيدك، تم إغلاق التنبيه ولن نزعجك بشأنه مرة أخرى.',
+  disputeFiled:'تم فتح بلاغ التنازع بنجاح', freezeCardNow:'تجميد البطاقة الآن',
+  cardFrozenBadge:'🔒 بطاقة مجمدة', caseOpenBadge:'بلاغ مفتوح', showCaseNum:'عرض رقم البلاغ', alertClosed:'تم إغلاق التنبيه، شكراً لتأكيدك',
+  suspTxn:'عملية مشبوهة', merchantLbl:'المتجر', amountLbl:'المبلغ', cardLbl:'البطاقة', locationLbl:'الموقع', unknownMerchant:'متجر غير معروف',
+
+  bankName:'بنك الإنماء', navDashboard:'لوحة التحكم', navAccounts:'الحسابات', navTransfers:'التحويلات', navCards:'البطاقات', navAssistant:'معاون · Muawen',
+  userName:'بسام العتيبي', userTier:'عميل مميز', currentBalance:'الرصيد الحالي', dateLbl:'الخميس، 16 يوليو 2026',
+  topbarTitles:{dashboard:'مرحباً، بسام 👋', accounts:'حساباتي', transfers:'التحويلات', cards:'بطاقاتي', assistant:'معاون · Muawen'},
+
+  goalTitle:'صندوق توفير — العمرة', goalSub:'هدف بحلول رمضان 2027',
+  goalOfTarget:'الحالي من الهدف', goalComplete:'مكتمل', addToJar:'+ إضافة 500 ر.س من الفائض', jarAdded:'✓ تمت إضافة 500 ر.س',
+  jarGoalReached:'🎉 تم الوصول للهدف بالكامل! جاهز لحجز العمرة.',
+  goalDetailTitle:'تفاصيل خطة الادخار', goalDetail1:'الهدف: تغطية تكاليف رحلة عمرة لشخصين (تذاكر، سكن، مواصلات داخلية).',
+  goalDetail2:'مدة الخطة المتبقية: 8 أشهر — بمعدل ادخار مقترح 475 ر.س شهرياً لبلوغ الهدف في وقته.',
+  goalDetail3:'يمكنك السحب الجزئي من الصندوق في أي وقت دون رسوم.',
+
+  loanWidgetTitle:'محاكي القرض', loanWidgetSub:'قرض شخصي', dur36:'36 شهر', dur48:'48 شهر', dur60:'60 شهر',
+
+  accountsTitle:'حساباتي', checking:'الحساب الجاري', savings:'حساب التوفير',
+  accDetailTitle:'تفاصيل', ibanLbl:'رقم الآيبان', availBalanceLbl:'الرصيد المتاح', lastTxnLbl:'آخر معاملة',
+  historyTitle:'سجل العمليات', copyIban:'نسخ', copied:'تم النسخ',
+  txnDining:'مطعم — نجد فيليج', txnSalary:'راتب شهري', txnShopping:'تسوق — بندة', txnTransferOut:'تحويل إلى حساب التوفير', txnBill:'فاتورة كهرباء',
+  txnTransferIn:'تحويل من الحساب الجاري', txnUmrah:'إضافة لصندوق العمرة', txnDeposit:'إيداع دوري',
+  timeToday:'اليوم، 12:40 م', timeYestSal:'أمس، 9:02 ص', timeYestShop:'أمس، 6:15 م', timeJul13:'13 يوليو، 4:30 م', timeJul11:'11 يوليو، 8:00 ص',
+  timeYestTransfer:'أمس، 4:30 م', timeJul9:'9 يوليو، 10:00 ص', timeJul1:'1 يوليو، 9:00 ص', lastTxnChecking:'مطعم — قبل ساعتين', lastTxnSavings:'تحويل داخلي — أمس',
+
+  transferTitle:'تحويل جديد', fromAccLbl:'من حساب', toAccLbl:'إلى (آيبان أو رقم جوال)', amountRialLbl:'المبلغ (ر.س)',
+  toPlaceholder:'SA •• •••• •••• 0099', amtPlaceholder:'0.00', transferType:'نوع التحويل', typeInstant:'تحويل فوري (SARIE)', feeNote:'بدون رسوم بين حساباتك',
+  confirmTransferBtn:'تأكيد التحويل', transferSuccess:'تم التحويل بنجاح', txnRefLbl:'رقم العملية', newTransferBtn:'تحويل جديد',
+  availableBalanceHint:'الرصيد المتاح للتحويل',
+  errEmptyTo:'الرجاء إدخال آيبان أو رقم جوال المستفيد', errInvalidAmt:'الرجاء إدخال مبلغ رقمي صحيح', errZeroAmt:'يجب أن يكون المبلغ أكبر من صفر', errExceedsBalance:'المبلغ يتجاوز الرصيد المتاح في الحساب',
+
+  cardsTitle:'بطاقاتي', cardIssuer:'بنك الإنماء · بطاقة ائتمانية', cardActive:'نشطة', cardFrozenLbl:'مجمّدة',
+  cardHolderLbl:'CARD HOLDER', cardHolderName:'BASSAM ALOTAIBI', expiresLbl:'EXPIRES', expiresVal:'09/29',
+  cardMgmtTitle:'إدارة البطاقة', freezeCardBtn:'تجميد البطاقة', unfreezeCardBtn:'إلغاء تجميد البطاقة',
+  cardFrozenNote:'تم تجميد بطاقتك المنتهية بـ 4821 بنجاح. لن تُقبل أي عمليات جديدة حتى يتم إلغاء التجميد.',
+  cardActiveNote:'بطاقتك نشطة وجاهزة للاستخدام. يمكنك تجميدها فوراً في أي وقت إذا فقدتها.',
+  creditLimitLbl:'الحد الائتماني', usedLbl:'المستخدم', dueDateLbl:'تاريخ الاستحقاق', dueDateVal:'5 أغسطس 2026', minDueLbl:'الحد الأدنى للسداد',
+
+  chatGreet:'مرحباً بسام، رصدت عملية مشبوهة على بطاقتك المنتهية بـ 4821. هل تعرفها؟', chatMinAgo:'قبل دقيقتين',
+  chatDisputeUser:'لا، لم أقم بهذه العملية', chatDisputeBot:'جارٍ اتخاذ الإجراءات اللازمة على البطاقة — يمكنك متابعة الخطوات في بطاقة التنبيه على اللوحة.',
+  chipJob:'ماذا لو فقدت وظيفتي لمدة شهرين؟', chipRaise:'ماذا لو حصلت على زيادة 20%؟', chipCar:'ماذا لو أخذت قرض سيارة أيضاً؟',
+  wiJobQ:'ماذا لو فقدت وظيفتي لمدة شهرين؟', wiJobA:'برصيدك الحالي ومدخراتك، يمكنك تغطية التزاماتك الثابتة لمدة 3.4 شهر تقريباً. أقترح تجميد الاشتراكات غير الأساسية كإجراء احترازي.',
+  wiRaiseQ:'ماذا لو حصلت على زيادة راتب 20%؟', wiRaiseA:'دخلك الشهري سيصبح 21,600 ر.س، ما يرفع قدرتك على الاقتراض بنحو 4,300 ر.س إضافية شهرياً مع الحفاظ على نفس نسبة الالتزامات.',
+  wiCarQ:'ماذا لو أخذت قرض سيارة أيضاً؟', wiCarA:'إجمالي التزاماتك الشهرية سيصل إلى 68% من الدخل، وهي نسبة مرتفعة. أنصح بتأجيل قرض السيارة حتى تنتهي من القرض الشخصي الحالي.',
+  onlineNow:'متصل الآن', currency:'ر.س',
+},
+en: {
+  dir:'ltr', langBtnLabel:'العربية', themeLight:'Night mode', themeDark:'Day mode',
+  mobileTagline:'GenAI-powered banking assistant — three interactive scenarios',
+  scenario1:'Proactive Spending Alert', scenario2:'Loan Decision Simulator', scenario3:'Fraud Detection & Resolution',
+  typeMsg:'Type a message...',
+  s1greet:"Hi Bassam, I noticed something worth your attention this month.",
+  s1title:'Spending Alert', s1sub:'Dining · This month',
+  s1body1:'You spent', s1body2:'SAR on dining this month, up', s1body3:'from last month.',
+  lastMonth:'Last month', thisMonth:'This month',
+  s1detailTitle:'Spending breakdown — Dining', catDining:'Dining', catShopping:'Shopping', catEnt:'Entertainment', catTransport:'Transport',
+  budgetBtn:'Help me budget', detailShow:'View details', detailHide:'Hide details',
+  s1assistantNote:'Muawen: your spending is up', s1assistantNote2:'from last month on dining. I suggest setting a monthly budget.',
+  s1planMsg:"Got it! I can set up a monthly budget plan that alerts you automatically as you approach the cap.",
+  s1capLabel:'Set a monthly cap for dining', s1activate:'Activate plan',
+  s1planActive:'Budget plan activated', s1planActiveCap:'Plan activated with a', s1planActiveCap2:'SAR monthly cap',
+  loanQ:'I want to know how much I can borrow for a personal loan of', loanQamt:'100,000', loanQcur:'SAR',
+  loanA:"Got it, I've reviewed your current finances. Here's a quick breakdown of the expected installment:",
+  loanSimTitle:'Decision Simulator', highApproval:'High approval odds',
+  incomeLbl:'Monthly income', fixedLbl:'Fixed obligations', installLbl48:'New installment (48 mo)', installLbl:'Installment', remainLbl:'Remaining balance', remainLbl2:'Remaining',
+  loanAmtLbl:'Loan amount', applyBtn:'Submit application', adjustBtn:'Adjust amount',
+  loanApplied1:'Your application', loanApplied2:'has been received. Decision within 3 minutes.', loanAppliedShort:'Application received —',
+  fraudTitle:'We flagged a suspicious transaction', fraudCard:'2 minutes ago',
+  fraudBody1:'A charge of', fraudBody2:'SAR from an unfamiliar merchant was made on your card.',
+  disputeBtn:"That wasn't me", confirmBtn:"Yes, that's correct", confirmBtnShort:"That's correct",
+  disputeReplyUser:"That wasn't me", disputeReplyBot:"Taking action on your card now — you can follow the steps on the alert card above.",
+  actionTaken:'Action taken', frozenNow:'Card frozen immediately', caseOpened:'Investigation case opened', replacementOnWay:'Replacement card on its way',
+  caseNumLbl:'Case number', confirmedReplyUser:"Yes, that's correct", confirmedReplyBot:"Thanks for confirming — this alert is closed and we won't flag it again.",
+  disputeFiled:'Dispute case opened successfully', freezeCardNow:'Freeze card now',
+  cardFrozenBadge:'🔒 Card frozen', caseOpenBadge:'Case open', showCaseNum:'Show case number', alertClosed:'Alert closed, thanks for confirming',
+  suspTxn:'Suspicious transaction', merchantLbl:'Merchant', amountLbl:'Amount', cardLbl:'Card', locationLbl:'Location', unknownMerchant:'Unknown Merchant LLC',
+
+  bankName:'Alinma Bank', navDashboard:'Dashboard', navAccounts:'Accounts', navTransfers:'Transfers', navCards:'Cards', navAssistant:'Muawen',
+  userName:'Bassam Alotaibi', userTier:'Premium client', currentBalance:'Current balance', dateLbl:'Thursday, July 16 2026',
+  topbarTitles:{dashboard:'Hi, Bassam 👋', accounts:'My Accounts', transfers:'Transfers', cards:'My Cards', assistant:'Muawen'},
+
+  goalTitle:'Savings jar — Umrah', goalSub:'Goal by Ramadan 2027',
+  goalOfTarget:'Progress toward goal', goalComplete:'complete', addToJar:'+ Add SAR 500 from surplus', jarAdded:'✓ Added SAR 500',
+  jarGoalReached:'🎉 Goal fully reached! Ready to book your Umrah.',
+  goalDetailTitle:'Savings plan details', goalDetail1:'Goal: cover an Umrah trip for two (flights, accommodation, local transport).',
+  goalDetail2:'Time remaining: 8 months — a suggested SAR 475/month keeps you on track.',
+  goalDetail3:'You can withdraw part of this jar anytime, fee-free.',
+
+  loanWidgetTitle:'Loan Simulator', loanWidgetSub:'Personal loan', dur36:'36 mo', dur48:'48 mo', dur60:'60 mo',
+
+  accountsTitle:'My Accounts', checking:'Checking Account', savings:'Savings Account',
+  accDetailTitle:'Details', ibanLbl:'IBAN', availBalanceLbl:'Available balance', lastTxnLbl:'Last transaction',
+  historyTitle:'Transaction history', copyIban:'Copy', copied:'Copied',
+  txnDining:'Restaurant — Najd Village', txnSalary:'Monthly salary', txnShopping:'Shopping — Panda', txnTransferOut:'Transfer to savings', txnBill:'Electricity bill',
+  txnTransferIn:'Transfer from checking', txnUmrah:'Added to Umrah jar', txnDeposit:'Recurring deposit',
+  timeToday:'Today, 12:40 PM', timeYestSal:'Yesterday, 9:02 AM', timeYestShop:'Yesterday, 6:15 PM', timeJul13:'Jul 13, 4:30 PM', timeJul11:'Jul 11, 8:00 AM',
+  timeYestTransfer:'Yesterday, 4:30 PM', timeJul9:'Jul 9, 10:00 AM', timeJul1:'Jul 1, 9:00 AM', lastTxnChecking:'Restaurant — 2 hours ago', lastTxnSavings:'Internal transfer — yesterday',
+
+  transferTitle:'New Transfer', fromAccLbl:'From account', toAccLbl:'To (IBAN or mobile number)', amountRialLbl:'Amount (SAR)',
+  toPlaceholder:'SA •• •••• •••• 0099', amtPlaceholder:'0.00', transferType:'Transfer type', typeInstant:'Instant transfer (SARIE)', feeNote:'Free between your own accounts',
+  confirmTransferBtn:'Confirm transfer', transferSuccess:'Transfer successful', txnRefLbl:'Reference number', newTransferBtn:'New transfer',
+  availableBalanceHint:'Available to transfer',
+  errEmptyTo:'Please enter the recipient IBAN or mobile number', errInvalidAmt:'Please enter a valid numeric amount', errZeroAmt:'Amount must be greater than zero', errExceedsBalance:'Amount exceeds the available account balance',
+
+  cardsTitle:'My Cards', cardIssuer:'Alinma Bank · Credit Card', cardActive:'Active', cardFrozenLbl:'Frozen',
+  cardHolderLbl:'CARD HOLDER', cardHolderName:'BASSAM ALOTAIBI', expiresLbl:'EXPIRES', expiresVal:'09/29',
+  cardMgmtTitle:'Card management', freezeCardBtn:'Freeze card', unfreezeCardBtn:'Unfreeze card',
+  cardFrozenNote:'Your card ending in 4821 has been frozen. No new transactions will be accepted until you unfreeze it.',
+  cardActiveNote:'Your card is active and ready to use. You can freeze it instantly anytime if it gets lost.',
+  creditLimitLbl:'Credit limit', usedLbl:'Used', dueDateLbl:'Due date', dueDateVal:'Aug 5, 2026', minDueLbl:'Minimum due',
+
+  chatGreet:"Hi Bassam, I flagged a suspicious transaction on your card ending 4821. Do you recognize it?", chatMinAgo:'2 minutes ago',
+  chatDisputeUser:"No, that wasn't me", chatDisputeBot:"Taking action on your card now — you can follow the steps on the alert card on the dashboard.",
+  chipJob:'What if I lost my job for two months?', chipRaise:'What if I got a 20% raise?', chipCar:'What if I also took a car loan?',
+  wiJobQ:'What if I lost my job for two months?', wiJobA:"With your current balance and savings, you could cover your fixed obligations for about 3.4 months. I'd suggest pausing non-essential subscriptions as a precaution.",
+  wiRaiseQ:'What if I got a 20% raise?', wiRaiseA:'Your monthly income would become SAR 21,600, raising your borrowing capacity by about SAR 4,300/month while keeping the same obligations ratio.',
+  wiCarQ:'What if I also took a car loan?', wiCarA:'Your total monthly obligations would reach 68% of income — that\'s high. I\'d recommend postponing the car loan until your current personal loan is paid off.',
+  onlineNow:'Online now', currency:'SAR',
+},
+};
+
+const RATE_BY_DUR = { 36:0.0335, 48:0.0245, 60:0.0195 };
+const fmt = n => Number(n).toLocaleString('en-US');
+const CHECKING_BALANCE = 42380.50;
+
+let appState = { lang:'ar', theme:'light' };
+
+function t(){ return L[appState.lang]; }
+function dirOf(){ return L[appState.lang].dir; }
+
+function toggleLang(){ appState.lang = appState.lang==='ar' ? 'en' : 'ar'; renderAll(); }
+function toggleTheme(){
+  appState.theme = appState.theme==='light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', appState.theme);
+  renderAll();
+}
+
+/* generic direction-aware stepper: DOM order is always [minus, display, plus].
+   Wrapping the row in the current text direction naturally flips which side
+   minus/plus land on, matching how "increase" should read in that language. */
+function stepperRow(minusHandler, displayHtml, plusHandler, extraStyle=''){
+  return `<div dir="${dirOf()}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;${extraStyle}">
+    <button onclick="${minusHandler}" style="width:28px;height:28px;border-radius:50%;border:none;background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,0.15);font-size:16px;font-weight:700;color:var(--text);font-family:inherit;cursor:pointer;flex-shrink:0;">−</button>
+    <div style="text-align:center;flex:1;">${displayHtml}</div>
+    <button onclick="${plusHandler}" style="width:28px;height:28px;border-radius:50%;border:none;background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,0.15);font-size:16px;font-weight:700;color:var(--text);font-family:inherit;cursor:pointer;flex-shrink:0;">+</button>
+  </div>`;
+}
+/* direction-aware range slider: dir attribute set to current language direction
+   so the fill/thumb travel matches natural reading direction for that language */
+function rangeInput(id, min, max, step, value, onInput, extraStyle=''){
+  return `<input type="range" id="${id}" class="mzRange" dir="${dirOf()}" min="${min}" max="${max}" step="${step}" value="${value}" oninput="${onInput}" style="width:100%;${extraStyle}"/>`;
+}
+
+/* ============================================================
+   MOBILE SCENARIOS
+   ============================================================ */
+let m1 = { detail:false, budget:false, planOn:false, cap:1500 };
+let m2 = { showAdjust:false, applied:false, amount:100000 };
+let m3 = { stage:'initial' };
+
+function phoneShell(innerId, label){
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">${label.num}</span>
+      <span style="font-size:13.5px;font-weight:600;color:var(--text);">${label.text}</span>
+    </div>
+    <div class="iosDevice">
+      <div class="iosIsland"></div>
+      <div class="iosScreen">
+        <div dir="${dirOf()}" style="background:var(--navy);padding:56px 16px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--terracotta),var(--navy));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.25);">
+            <span style="color:#fff;font-weight:700;font-size:16px;">م</span>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="color:#fff;font-weight:600;font-size:15px;line-height:1.3;">معاون <span style="opacity:0.55;font-weight:400;font-size:11.5px;">Muawen</span></div>
+            <div style="display:flex;align-items:center;gap:5px;margin-top:3px;">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;"></span>
+              <span style="color:rgba(255,255,255,0.6);font-size:11px;">${t().onlineNow}</span>
+            </div>
+          </div>
+        </div>
+        <div dir="${dirOf()}" id="${innerId}" style="flex:1;overflow-y:auto;background:var(--panel-alt);padding:16px 12px;display:flex;flex-direction:column;gap:6px;"></div>
+        <div dir="${dirOf()}" style="display:flex;align-items:center;gap:8px;padding:10px 12px 30px;background:var(--panel);border-top:1px solid var(--border);flex-shrink:0;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--panel-alt);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="14" height="16" viewBox="0 0 14 16" fill="none"><rect x="4" y="1" width="6" height="10" rx="3" stroke="var(--text)" stroke-width="1.4"/><path d="M1 8.5C1 11.5 3.5 14 7 14C10.5 14 13 11.5 13 8.5" stroke="var(--text)" stroke-width="1.4" stroke-linecap="round"/><path d="M7 14V16" stroke="var(--text)" stroke-width="1.4"/></svg>
+          </div>
+          <div style="flex:1;background:var(--panel-alt);border-radius:20px;padding:9px 14px;font-size:12.5px;color:var(--text-softer);">${t().typeMsg}</div>
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--terracotta);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 12H20M20 12L13 5M20 12L13 19" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" transform="${dirOf()==='rtl'?'scale(-1,1) translate(-24,0)':''}"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="iosHome"><div></div></div>
+    </div>
+  </div>`;
+}
+
+function renderMobileScreens(){
+  document.getElementById('mobileTagline').textContent = t().mobileTagline;
+  document.getElementById('mobileScreens').innerHTML =
+    phoneShell('s1log', {num:1, text:t().scenario1}) +
+    phoneShell('s2log', {num:2, text:t().scenario2}) +
+    phoneShell('s3log', {num:3, text:t().scenario3});
+  renderM1(); renderM2(); renderM3();
+}
+
+function renderM1(){
+  const tt = t();
+  const log = document.getElementById('s1log'); if(!log) return;
+  log.innerHTML = `
+    <div style="align-self:flex-start;max-width:82%;background:var(--panel);border-radius:16px 16px 4px 16px;padding:11px 14px;box-shadow:0 1px 2px rgba(0,0,0,0.06);border:1px solid var(--border);">
+      <div style="font-size:13.5px;line-height:1.65;color:var(--text);">${tt.s1greet}</div>
+    </div>
+    <div style="align-self:flex-start;font-size:10px;color:var(--text-softer);padding:0 5px 8px;">10:14 AM</div>
+
+    <div style="align-self:flex-start;width:87%;background:var(--panel);border-radius:18px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;">
+        <div style="width:30px;height:30px;border-radius:9px;background:rgba(217,142,43,0.16);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="15" height="14" viewBox="0 0 24 22" fill="none"><path d="M12 2L23 21H1L12 2Z" stroke="var(--amber)" stroke-width="2" stroke-linejoin="round"/><path d="M12 9V13.5" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="var(--amber)"/></svg>
+        </div>
+        <div style="font-size:14.5px;font-weight:700;color:var(--text);">${tt.s1title}</div>
+      </div>
+      <div style="font-size:13px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;">
+        ${tt.s1body1} <span dir="ltr" style="font-weight:700;color:var(--text);">1,850 ${tt.currency}</span> ${tt.s1body2} <span dir="ltr" style="font-weight:700;color:var(--amber);">42%</span> ${tt.s1body3}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:14px;">
+        <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-soft);margin-bottom:4px;"><span>${tt.lastMonth}</span><span dir="ltr">1,300 ${tt.currency}</span></div><div style="height:6px;border-radius:3px;background:var(--border2);overflow:hidden;"><div style="height:100%;width:70%;background:rgba(128,128,128,0.55);border-radius:3px;"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-soft);margin-bottom:4px;"><span>${tt.thisMonth}</span><span dir="ltr" style="color:var(--amber);font-weight:700;">1,850 ${tt.currency}</span></div><div style="height:6px;border-radius:3px;background:var(--border2);overflow:hidden;"><div style="height:100%;width:100%;background:var(--amber);border-radius:3px;"></div></div></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="m1.budget=!m1.budget;renderM1()" style="flex:1;padding:10px 6px;border-radius:12px;font-size:12px;font-weight:600;border:none;background:var(--terracotta);color:#fff;font-family:inherit;cursor:pointer;">${tt.budgetBtn}</button>
+        <button onclick="m1.detail=!m1.detail;renderM1()" style="flex:1;padding:10px 6px;border-radius:12px;font-size:12px;font-weight:600;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:inherit;cursor:pointer;">${m1.detail?tt.detailHide:tt.detailShow}</button>
+      </div>
+    </div>
+    <div style="align-self:flex-start;font-size:10px;color:var(--text-softer);padding:0 5px 8px;">10:14 AM</div>
+
+    ${m1.detail ? `
+    <div style="align-self:flex-start;width:87%;background:var(--panel);border-radius:18px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid var(--border);">
+      <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:12px;">${tt.s1detailTitle}</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text);margin-bottom:4px;"><span>${tt.catDining}</span><span dir="ltr">1,850 ${tt.currency}</span></div><div style="height:5px;border-radius:3px;background:var(--border2);"><div style="height:100%;width:100%;background:var(--terracotta);border-radius:3px;"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text);margin-bottom:4px;"><span>${tt.catShopping}</span><span dir="ltr">940 ${tt.currency}</span></div><div style="height:5px;border-radius:3px;background:var(--border2);"><div style="height:100%;width:51%;background:var(--text-soft);border-radius:3px;"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text);margin-bottom:4px;"><span>${tt.catEnt}</span><span dir="ltr">620 ${tt.currency}</span></div><div style="height:5px;border-radius:3px;background:var(--border2);"><div style="height:100%;width:33%;background:var(--text-soft);border-radius:3px;"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text);margin-bottom:4px;"><span>${tt.catTransport}</span><span dir="ltr">310 ${tt.currency}</span></div><div style="height:5px;border-radius:3px;background:var(--border2);"><div style="height:100%;width:17%;background:var(--text-soft);border-radius:3px;"></div></div></div>
+      </div>
+    </div>
+    <div style="align-self:flex-start;font-size:10px;color:var(--text-softer);padding:0 5px 8px;">now</div>` : ''}
+
+    ${m1.budget ? `
+    <div style="align-self:flex-start;max-width:82%;background:var(--panel);border-radius:16px 16px 4px 16px;padding:11px 14px;box-shadow:0 1px 2px rgba(0,0,0,0.06);border:1px solid var(--border);">
+      <div style="font-size:13.5px;line-height:1.65;color:var(--text);">${tt.s1planMsg}</div>
+    </div>
+    <div style="align-self:flex-start;width:87%;background:var(--panel);border-radius:18px;padding:14px 16px;margin-top:4px;box-shadow:0 4px 16px rgba(0,0,0,0.05);border:1px solid var(--border);">
+      ${!m1.planOn ? `
+      <div style="font-size:11.5px;color:var(--text-soft);margin-bottom:8px;">${tt.s1capLabel}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        ${rangeInput('m1cap',800,2000,50,m1.cap,'m1.cap=Number(this.value);renderM1()','flex:1;')}
+        <span dir="ltr" style="font-size:12.5px;font-weight:700;color:var(--text);width:80px;text-align:end;">${fmt(m1.cap)} ${tt.currency}</span>
+      </div>
+      <button onclick="m1.planOn=true;renderM1()" style="width:100%;padding:9px 6px;border-radius:12px;font-size:12px;font-weight:600;border:none;background:var(--navy);color:#fff;font-family:inherit;cursor:pointer;">${tt.s1activate}</button>` : `
+      <div style="display:flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span style="font-size:12px;font-weight:600;color:var(--green);">${tt.s1planActiveCap} <span dir="ltr">${fmt(m1.cap)}</span> ${tt.s1planActiveCap2}</span>
+      </div>`}
+    </div>` : ''}
+  `;
+}
+
+function calcLoan48(amount){
+  const income=18000, fixed=6200;
+  const installment = Math.round(amount*0.0245);
+  const remaining = income-fixed-installment;
+  return { income, fixed, installment, remaining,
+    fixedPct:(fixed/income*100).toFixed(1), instPct:(installment/income*100).toFixed(1),
+    remainPct:Math.max(0,100-(fixed/income*100)-(installment/income*100)).toFixed(1) };
+}
+function renderM2(){
+  const tt=t(); const v = calcLoan48(m2.amount);
+  const log = document.getElementById('s2log'); if(!log) return;
+  log.innerHTML = `
+    <div style="align-self:flex-end;max-width:82%;background:var(--navy);border-radius:16px 16px 16px 4px;padding:11px 14px;box-shadow:0 1px 2px rgba(0,0,0,0.15);">
+      <div style="font-size:13.5px;line-height:1.65;color:#fff;">${tt.loanQ} <span dir="ltr">${tt.loanQamt}</span> ${tt.loanQcur}</div>
+    </div>
+    <div style="align-self:flex-end;font-size:10px;color:var(--text-softer);padding:0 5px 8px;">11:02 AM</div>
+
+    <div style="align-self:flex-start;max-width:82%;background:var(--panel);border-radius:16px 16px 4px 16px;padding:11px 14px;box-shadow:0 1px 2px rgba(0,0,0,0.06);border:1px solid var(--border);">
+      <div style="font-size:13.5px;line-height:1.65;color:var(--text);">${tt.loanA}</div>
+    </div>
+    <div style="align-self:flex-start;font-size:10px;color:var(--text-softer);padding:0 5px 8px;">11:02 AM</div>
+
+    <div style="align-self:flex-start;width:90%;background:var(--panel);border-radius:18px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:14.5px;font-weight:700;color:var(--text);">${tt.loanSimTitle}</div>
+        <div style="display:flex;align-items:center;gap:5px;background:rgba(63,166,114,0.15);border-radius:20px;padding:4px 10px;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span style="font-size:10.5px;font-weight:700;color:var(--green);">${tt.highApproval}</span>
+        </div>
+      </div>
+      <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;margin-bottom:10px;">
+        <div style="width:${v.fixedPct}%;background:var(--text-soft);"></div>
+        <div style="width:${v.instPct}%;background:var(--terracotta);"></div>
+        <div style="width:${v.remainPct}%;background:var(--green);"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-soft);">${tt.incomeLbl}</span><span dir="ltr" style="font-weight:700;color:var(--text);">18,000 ${tt.currency}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-soft);">${tt.fixedLbl}</span><span dir="ltr" style="font-weight:700;color:var(--text);">6,200 ${tt.currency}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-soft);">${tt.installLbl48}</span><span dir="ltr" style="font-weight:700;color:var(--terracotta);">${fmt(v.installment)} ${tt.currency}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-soft);">${tt.remainLbl}</span><span dir="ltr" style="font-weight:700;color:var(--green);">${fmt(v.remaining)} ${tt.currency}</span></div>
+      </div>
+
+      ${m2.showAdjust ? `
+      <div style="background:var(--panel-alt);border-radius:12px;padding:10px 12px;margin-bottom:12px;">
+        ${stepperRow(`m2.amount=Math.max(20000,m2.amount-10000);renderM2()`,
+          `<div style="font-size:10.5px;color:var(--text-soft);">${tt.loanAmtLbl}</div><div dir="ltr" style="font-size:14.5px;font-weight:700;color:var(--text);">${fmt(m2.amount)} ${tt.currency}</div>`,
+          `m2.amount=Math.min(300000,m2.amount+10000);renderM2()`)}
+      </div>` : ''}
+
+      ${m2.applied ? `
+      <div style="display:flex;align-items:center;gap:6px;background:rgba(63,166,114,0.15);border-radius:12px;padding:10px 12px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span style="font-size:11.5px;color:var(--text);">${tt.loanApplied1} <span dir="ltr" style="font-weight:700;">224410</span>. ${tt.loanApplied2}</span>
+      </div>` : `
+      <div style="display:flex;gap:8px;">
+        <button onclick="m2.applied=true;renderM2()" style="flex:1;padding:10px 6px;border-radius:12px;font-size:12px;font-weight:600;border:none;background:var(--terracotta);color:#fff;font-family:inherit;cursor:pointer;">${tt.applyBtn}</button>
+        <button onclick="m2.showAdjust=!m2.showAdjust;renderM2()" style="flex:1;padding:10px 6px;border-radius:12px;font-size:12px;font-weight:600;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:inherit;cursor:pointer;">${tt.adjustBtn}</button>
+      </div>`}
+    </div>
+    <div style="align-self:flex-start;font-size:10px;color:var(--text-softer);padding:0 5px 8px;">11:03 AM</div>
+  `;
+}
+
+function renderM3(){
+  const tt=t();
+  const log = document.getElementById('s3log'); if(!log) return;
+  log.innerHTML = `
+    <div style="align-self:flex-start;width:88%;background:var(--panel);border-radius:18px;padding:16px;box-shadow:0 4px 16px rgba(217,88,79,0.15);border:1px solid rgba(217,88,79,0.3);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;">
+        <div style="width:30px;height:30px;border-radius:9px;background:rgba(217,88,79,0.16);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L3 6V11C3 16 6.8 20.4 12 22C17.2 20.4 21 16 21 11V6L12 2Z" stroke="var(--red)" stroke-width="2" stroke-linejoin="round"/><path d="M12 8V12.5" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.1" fill="var(--red)"/></svg>
+        </div>
+        <div style="font-size:14.5px;font-weight:700;color:var(--red);">${tt.fraudTitle}</div>
+      </div>
+      <div style="font-size:13px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;">
+        ${tt.fraudBody1} <span dir="ltr" style="font-weight:700;color:var(--text);">4,250 ${tt.currency}</span> ${tt.fraudBody2}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--panel-alt);border-radius:12px;padding:10px 12px;margin-bottom:14px;">
+        <span dir="ltr" style="font-size:12.5px;font-weight:600;color:var(--text);letter-spacing:0.5px;">•••• •••• •••• 4821</span>
+        <span style="font-size:10.5px;color:var(--text-softer);">${tt.fraudCard}</span>
+      </div>
+      ${m3.stage==='initial' ? `
+      <div style="display:flex;gap:8px;">
+        <button onclick="m3.stage='disputed';renderM3()" style="flex:1;padding:10px 6px;border-radius:12px;font-size:11.5px;font-weight:600;border:none;background:var(--red);color:#fff;font-family:inherit;cursor:pointer;">${tt.disputeBtn}</button>
+        <button onclick="m3.stage='confirmed_ok';renderM3()" style="flex:1;padding:10px 6px;border-radius:12px;font-size:11.5px;font-weight:600;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:inherit;cursor:pointer;">${tt.confirmBtn}</button>
+      </div>` : ''}
+    </div>
+    <div style="align-self:flex-start;font-size:10px;color:var(--text-softer);padding:0 5px 8px;">${tt.fraudCard}</div>
+
+    ${m3.stage==='disputed' ? `
+    <div style="align-self:flex-end;max-width:82%;background:var(--navy);border-radius:16px 16px 16px 4px;padding:11px 14px;"><div style="font-size:13px;color:#fff;">${tt.disputeReplyUser}</div></div>
+    <div style="align-self:flex-end;font-size:10px;color:var(--text-softer);padding:0 5px 8px;">now</div>
+    <div style="align-self:flex-start;width:88%;background:var(--panel);border-radius:18px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <div style="width:30px;height:30px;border-radius:9px;background:rgba(63,166,114,0.16);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);">${tt.actionTaken}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px;font-size:12.5px;color:var(--text-soft);margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:7px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>${tt.frozenNow}</div>
+        <div style="display:flex;align-items:center;gap:7px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>${tt.caseOpened}</div>
+        <div style="display:flex;align-items:center;gap:7px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>${tt.replacementOnWay}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--panel-alt);border-radius:12px;padding:10px 12px;">
+        <span style="font-size:11.5px;color:var(--text-soft);">${tt.caseNumLbl}</span><span dir="ltr" style="font-size:13px;font-weight:700;color:var(--text);">DSP-88213-2026</span>
+      </div>
+    </div>
+    <div style="align-self:flex-start;font-size:10px;color:var(--text-softer);padding:0 5px 8px;">now</div>` : ''}
+
+    ${m3.stage==='confirmed_ok' ? `
+    <div style="align-self:flex-end;max-width:82%;background:var(--navy);border-radius:16px 16px 16px 4px;padding:11px 14px;"><div style="font-size:13px;color:#fff;">${tt.confirmedReplyUser}</div></div>
+    <div style="align-self:flex-end;font-size:10px;color:var(--text-softer);padding:0 5px 8px;">now</div>
+    <div style="align-self:flex-start;max-width:82%;background:var(--panel);border-radius:16px 16px 4px 16px;padding:11px 14px;box-shadow:0 1px 2px rgba(0,0,0,0.06);border:1px solid var(--border);"><div style="font-size:13.5px;line-height:1.65;color:var(--text);">${tt.confirmedReplyBot}</div></div>
+    <div style="align-self:flex-start;font-size:10px;color:var(--text-softer);padding:0 5px 8px;">now</div>` : ''}
+  `;
+}
+
+/* ============================================================
+   WEB DASHBOARD
+   ============================================================ */
+let dash = {
+  view:'dashboard', s1Detail:false, s1BudgetPanel:false, s1PlanOn:false, s1BudgetCap:1500,
+  s2Amount:100000, s2Duration:48, s2Applied:false,
+  s3Step:0, s3ConfirmedOk:false,
+  jarCurrent:4200, jarTarget:8000, jarConfirm:false, jarShowDetail:false,
+  whatIf:null,
+  selectedAcc:1, transferTo:'', transferAmount:'', transferDone:false, transferRef:'', transferError:'',
+  cardFrozen:false,
+};
+
+function getAccounts(){
+  const tt = t();
+  return {
+    1: { name: tt.checking, iban:'SA03 8000 0000 6080 1016 7734', balance:CHECKING_BALANCE, lastTxn:tt.lastTxnChecking,
+      history:[
+        { icon:'🍽️', iconBg:'rgba(217,142,43,0.16)', title:tt.txnDining, time:tt.timeToday, amount:'-186.00', amountColor:'var(--red)' },
+        { icon:'💳', iconBg:'var(--panel-alt2)', title:tt.txnSalary, time:tt.timeYestSal, amount:'+18,000.00', amountColor:'var(--green)' },
+        { icon:'🛒', iconBg:'var(--panel-alt2)', title:tt.txnShopping, time:tt.timeYestShop, amount:'-412.50', amountColor:'var(--red)' },
+        { icon:'🔁', iconBg:'rgba(195,107,78,0.16)', title:tt.txnTransferOut, time:tt.timeJul13, amount:'-500.00', amountColor:'var(--red)' },
+        { icon:'⚡', iconBg:'var(--panel-alt2)', title:tt.txnBill, time:tt.timeJul11, amount:'-340.00', amountColor:'var(--red)' },
+      ]},
+    2: { name: tt.savings, iban:'SA21 8000 0000 6080 1016 2210', balance:15940.00, lastTxn:tt.lastTxnSavings,
+      history:[
+        { icon:'🔁', iconBg:'rgba(195,107,78,0.16)', title:tt.txnTransferIn, time:tt.timeYestTransfer, amount:'+500.00', amountColor:'var(--green)' },
+        { icon:'🕌', iconBg:'rgba(195,107,78,0.16)', title:tt.txnUmrah, time:tt.timeJul9, amount:'+500.00', amountColor:'var(--green)' },
+        { icon:'💰', iconBg:'var(--panel-alt2)', title:tt.txnDeposit, time:tt.timeJul1, amount:'+1,000.00', amountColor:'var(--green)' },
+      ]},
+  };
+}
+
+const NAV_KEYS = ['dashboard','accounts','transfers','cards','assistant'];
+const NAV_ICONS = {
+  dashboard:`<rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.8"/>`,
+  accounts:`<rect x="2" y="6" width="20" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M2 10H22" stroke="currentColor" stroke-width="1.8"/>`,
+  transfers:`<path d="M17 8L21 12L17 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 8L3 12L7 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 4L10 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
+  cards:`<rect x="2" y="5" width="20" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M2 9.5H22" stroke="currentColor" stroke-width="1.8"/><path d="M6 15H10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
+  assistant:`<path d="M12 2L21 6V11C21 16 17.2 20.4 12 22C6.8 20.4 3 16 3 11V6L12 2Z" stroke="{c}" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="10.5" r="2.2" stroke="{c}" stroke-width="1.6"/>`,
+};
+
+function goView(v){ dash.view = v; renderDash(); }
+
+function renderDashShell(){
+  const tt = t();
+  document.getElementById('dashInner').innerHTML = `
+  <div dir="${dirOf()}" style="width:248px;flex-shrink:0;background:var(--navy);display:flex;flex-direction:column;padding:24px 18px;gap:28px;">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px;">
+      <div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--terracotta),#8a4530);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="color:#fff;font-weight:700;font-size:15px;">أ</span>
+      </div>
+      <div style="color:#fff;font-weight:700;font-size:16px;">${tt.bankName}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3px;" id="sidebarNav"></div>
+    <div style="margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px 10px;border-radius:12px;background:rgba(255,255,255,0.05);">
+      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3d5a76,var(--navy));flex-shrink:0;"></div>
+      <div style="min-width:0;">
+        <div style="color:#fff;font-size:12.5px;font-weight:600;">${tt.userName}</div>
+        <div style="color:rgba(255,255,255,0.5);font-size:11px;">${tt.userTier}</div>
+      </div>
+    </div>
+  </div>
+  <div dir="${dirOf()}" style="flex:1;display:flex;flex-direction:column;min-width:0;">
+    <div style="height:76px;flex-shrink:0;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;">
+      <div>
+        <div id="topbarTitle" style="font-size:17px;font-weight:700;color:var(--text);"></div>
+        <div style="font-size:12.5px;color:var(--text-softer);margin-top:2px;">${tt.dateLbl}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:22px;">
+        <div style="text-align:end;">
+          <div style="font-size:11px;color:var(--text-softer);">${tt.currentBalance}</div>
+          <div dir="ltr" style="font-size:16px;font-weight:700;color:var(--text);">42,380.50 <span style="font-size:12px;font-weight:500;color:var(--text-softer);">${tt.currency}</span></div>
+        </div>
+        <div style="width:1px;height:30px;background:var(--border2);"></div>
+        <div style="position:relative;width:36px;height:36px;border-radius:50%;background:var(--panel-alt);display:flex;align-items:center;justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 8C18 5.2 15.3 3 12 3C8.7 3 6 5.2 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="var(--text)" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20" stroke="var(--text)" stroke-width="1.7"/></svg>
+          <div style="position:absolute;top:6px;left:6px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid var(--panel);"></div>
+        </div>
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#3d5a76,var(--navy));"></div>
+      </div>
+    </div>
+    <div id="dashBody" style="flex:1;overflow:hidden;"></div>
+  </div>`;
+}
+
+function renderSidebar(){
+  const tt = t();
+  const labels = { dashboard:tt.navDashboard, accounts:tt.navAccounts, transfers:tt.navTransfers, cards:tt.navCards, assistant:tt.navAssistant };
+  document.getElementById('sidebarNav').innerHTML = NAV_KEYS.map(key=>{
+    const active = dash.view === key;
+    const iconColor = key==='assistant' ? (active ? 'var(--terracotta)' : 'currentColor') : 'currentColor';
+    const icon = NAV_ICONS[key].replace(/\{c\}/g, iconColor);
+    return `<div onclick="goView('${key}')" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;font-size:13.5px;position:relative;background:${active?'rgba(195,107,78,0.2)':'transparent'};color:${active?'#fff':'rgba(255,255,255,0.62)'};font-weight:${active?'600':'400'};">
+      ${active ? `<div style="position:absolute;${dirOf()==='rtl'?'right':'left'}:0;top:6px;bottom:6px;width:3px;border-radius:3px;background:var(--terracotta);"></div>` : ''}
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">${icon}</svg>
+      ${labels[key]}
+    </div>`;
+  }).join('');
+}
+
+function calcLoanDur(amount, duration){
+  const income=18000, fixed=6200;
+  const installment = Math.round(amount*RATE_BY_DUR[duration]);
+  const remaining = income-fixed-installment;
+  const fixedPct=(fixed/income*100), instPct=(installment/income*100);
+  return { installment, remaining, fixedPct:fixedPct.toFixed(1), instPct:instPct.toFixed(1), remainPct:Math.max(0,100-fixedPct-instPct).toFixed(1) };
+}
+
+function addToJar(){
+  if(dash.jarCurrent >= dash.jarTarget) return; // hard stop at goal
+  dash.jarCurrent = Math.min(dash.jarTarget, dash.jarCurrent+500);
+  dash.jarConfirm = true;
+  renderDash();
+  setTimeout(()=>{ dash.jarConfirm=false; renderDash(); }, 2200);
+}
+
+/* --- Transfer validation: rejects 0, negative, non-numeric, and anything over balance --- */
+function submitTransfer(){
+  const tt = t();
+  const raw = (dash.transferAmount || '').trim();
+  const num = Number(raw);
+  const balance = getAccounts()[1].balance; // transferring from checking account
+
+  if(!dash.transferTo.trim()){ dash.transferError = tt.errEmptyTo; renderDash(); return; }
+  if(raw === '' || isNaN(num) || !isFinite(num)){ dash.transferError = tt.errInvalidAmt; renderDash(); return; }
+  if(num <= 0){ dash.transferError = tt.errZeroAmt; renderDash(); return; }
+  if(num > balance){ dash.transferError = tt.errExceedsBalance; renderDash(); return; }
+
+  dash.transferError = '';
+  dash.transferDone = true;
+  dash.transferRef = String(Math.floor(100000 + Math.random()*900000));
+  renderDash();
+}
+function resetTransfer(){
+  dash.transferDone=false; dash.transferTo=''; dash.transferAmount=''; dash.transferError='';
+  renderDash();
+}
+
+function chatPanelHTML(){
+  const tt = t();
+  const s3AnyDisputed = dash.s3Step >= 1;
+  const wiMap = { job:{q:tt.wiJobQ,a:tt.wiJobA}, raise:{q:tt.wiRaiseQ,a:tt.wiRaiseA}, car:{q:tt.wiCarQ,a:tt.wiCarA} };
+  const wi = wiMap[dash.whatIf] || {q:'',a:''};
+  return `
+  <div style="display:flex;flex-direction:column;height:100%;" dir="${dirOf()}">
+    <div style="display:flex;align-items:center;gap:10px;padding:18px 20px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--terracotta),var(--navy));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="color:#fff;font-weight:700;font-size:15px;">م</span>
+      </div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:14.5px;color:var(--text);">معاون <span style="opacity:0.5;font-weight:400;font-size:11px;">Muawen</span></div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:2px;">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;"></span>
+          <span style="font-size:11px;color:var(--text-softer);">${tt.onlineNow}</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:18px 18px 6px;display:flex;flex-direction:column;gap:12px;background:var(--panel-alt);">
+      <div style="align-self:flex-start;max-width:88%;background:var(--panel);border-radius:14px 14px 14px 3px;padding:12px 15px;box-shadow:0 1px 2px rgba(0,0,0,0.05);border:1px solid var(--border);">
+        <div style="font-size:13.5px;line-height:1.7;color:var(--text);">${tt.chatGreet}</div>
+      </div>
+      <div style="align-self:flex-start;font-size:10.5px;color:var(--text-softer);padding:0 5px;">${tt.chatMinAgo}</div>
+
+      ${s3AnyDisputed ? `
+      <div style="align-self:flex-end;max-width:82%;background:var(--navy);border-radius:14px 14px 3px 14px;padding:12px 15px;"><div style="font-size:13.5px;color:#fff;">${tt.chatDisputeUser}</div></div>
+      <div style="align-self:flex-start;max-width:88%;background:var(--panel);border-radius:14px 14px 14px 3px;padding:12px 15px;box-shadow:0 1px 2px rgba(0,0,0,0.05);border:1px solid var(--border);"><div style="font-size:13.5px;line-height:1.7;color:var(--text);">${tt.chatDisputeBot}</div></div>` : ''}
+
+      ${dash.whatIf ? `
+      <div style="align-self:flex-end;max-width:82%;background:var(--navy);border-radius:14px 14px 3px 14px;padding:12px 15px;"><div style="font-size:13.5px;color:#fff;">${wi.q}</div></div>
+      <div style="align-self:flex-start;max-width:88%;background:var(--panel);border-radius:14px 14px 14px 3px;padding:12px 15px;box-shadow:0 1px 2px rgba(0,0,0,0.05);border:1px solid var(--border);"><div style="font-size:13.5px;line-height:1.7;color:var(--text);">${wi.a}</div></div>` : ''}
+
+      <div id="liveChatLog" style="display:flex;flex-direction:column;gap:12px;"></div>
+    </div>
+    <div style="padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0;">
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px;">
+        <button onclick="dash.whatIf='job';renderDash()" style="padding:7px 12px;border-radius:20px;font-size:11.5px;border:1px solid var(--border2);background:var(--panel-alt2);color:var(--text);font-family:inherit;cursor:pointer;">${tt.chipJob}</button>
+        <button onclick="dash.whatIf='raise';renderDash()" style="padding:7px 12px;border-radius:20px;font-size:11.5px;border:1px solid var(--border2);background:var(--panel-alt2);color:var(--text);font-family:inherit;cursor:pointer;">${tt.chipRaise}</button>
+        <button onclick="dash.whatIf='car';renderDash()" style="padding:7px 12px;border-radius:20px;font-size:11.5px;border:1px solid var(--border2);background:var(--panel-alt2);color:var(--text);font-family:inherit;cursor:pointer;">${tt.chipCar}</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--panel-alt);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="14" height="16" viewBox="0 0 14 16" fill="none"><rect x="4" y="1" width="6" height="10" rx="3" stroke="var(--text)" stroke-width="1.4"/><path d="M1 8.5C1 11.5 3.5 14 7 14C10.5 14 13 11.5 13 8.5" stroke="var(--text)" stroke-width="1.4" stroke-linecap="round"/><path d="M7 14V16" stroke="var(--text)" stroke-width="1.4"/></svg>
+        </div>
+        <input id="liveChatInput" class="mzText" placeholder="${tt.typeMsg}" style="flex:1;border-radius:20px;background:var(--panel-alt);border:1px solid transparent;padding:10px 15px;font-size:12.5px;" onkeydown="if(event.key==='Enter') sendLiveChat();"/>
+        <button onclick="sendLiveChat()" style="width:36px;height:36px;border-radius:50%;background:var(--terracotta);border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 12H20M20 12L13 5M20 12L13 19" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" transform="${dirOf()==='rtl'?'scale(-1,1) translate(-24,0)':''}"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderDash(){
+  const tt = t();
+  renderSidebar();
+  document.getElementById('topbarTitle').textContent = tt.topbarTitles[dash.view];
+  const body = document.getElementById('dashBody');
+  const ACC = getAccounts();
+
+  if(dash.view==='dashboard'){
+    const v = calcLoanDur(dash.s2Amount, dash.s2Duration);
+    const jarPct = Math.round((dash.jarCurrent/dash.jarTarget)*100);
+    const jarOffset = (263.9*(1-jarPct/100)).toFixed(1);
+    const jarFull = dash.jarCurrent >= dash.jarTarget;
+
+    body.innerHTML = `
+    <div style="flex:1;display:flex;gap:24px;padding:28px 32px;overflow:hidden;height:100%;">
+      <div style="flex:1;min-width:640px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;padding-bottom:8px;">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;">
+
+          <div style="background:var(--panel);border-radius:18px;padding:22px;box-shadow:var(--card-shadow);border:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(217,142,43,0.16);display:flex;align-items:center;justify-content:center;">
+                <svg width="17" height="16" viewBox="0 0 24 22" fill="none"><path d="M12 2L23 21H1L12 2Z" stroke="var(--amber)" stroke-width="2" stroke-linejoin="round"/><path d="M12 9V13.5" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="var(--amber)"/></svg>
+              </div>
+              <div><div style="font-size:15px;font-weight:700;color:var(--text);">${tt.s1title}</div><div style="font-size:11px;color:var(--text-softer);">${tt.s1sub}</div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+              <div><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-soft);margin-bottom:4px;"><span>${tt.lastMonth}</span><span dir="ltr">1,300 ${tt.currency}</span></div><div style="height:7px;border-radius:4px;background:var(--border2);overflow:hidden;"><div style="height:100%;width:70%;background:var(--text-soft);border-radius:4px;"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-soft);margin-bottom:4px;"><span>${tt.thisMonth}</span><span dir="ltr" style="color:var(--amber);font-weight:700;">1,850 ${tt.currency}</span></div><div style="height:7px;border-radius:4px;background:var(--border2);overflow:hidden;"><div style="height:100%;width:100%;background:var(--amber);border-radius:4px;"></div></div></div>
+            </div>
+            ${dash.s1Detail ? `
+            <div style="display:flex;flex-direction:column;gap:7px;padding:12px;background:var(--panel-alt2);border-radius:12px;margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text);"><span>${tt.catShopping}</span><span dir="ltr">940 ${tt.currency}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text);"><span>${tt.catEnt}</span><span dir="ltr">620 ${tt.currency}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text);"><span>${tt.catTransport}</span><span dir="ltr">310 ${tt.currency}</span></div>
+            </div>` : ''}
+            <div style="background:var(--panel-alt2);border-radius:12px;padding:11px 13px;font-size:12.5px;line-height:1.6;color:var(--text);margin-bottom:12px;">
+              ${tt.s1assistantNote} <span dir="ltr" style="font-weight:700;color:var(--amber);">42%</span> ${tt.s1assistantNote2}
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="dash.s1BudgetPanel=!dash.s1BudgetPanel;renderDash()" style="flex:1;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:600;border:none;background:var(--terracotta);color:#fff;font-family:inherit;cursor:pointer;">${tt.budgetBtn}</button>
+              <button onclick="dash.s1Detail=!dash.s1Detail;renderDash()" style="flex:1;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:600;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:inherit;cursor:pointer;">${dash.s1Detail?tt.detailHide:tt.detailShow}</button>
+            </div>
+            ${dash.s1BudgetPanel ? `
+            <div style="margin-top:12px;padding:13px;background:var(--panel-alt2);border-radius:12px;">
+              ${!dash.s1PlanOn ? `
+              <div style="font-size:11.5px;color:var(--text-soft);margin-bottom:8px;">${tt.s1capLabel}</div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                ${rangeInput('dashCap',800,2000,50,dash.s1BudgetCap,'dash.s1BudgetCap=Number(this.value);renderDash()','flex:1;')}
+                <span dir="ltr" style="font-size:12.5px;font-weight:700;color:var(--text);width:80px;text-align:end;">${fmt(dash.s1BudgetCap)} ${tt.currency}</span>
+              </div>
+              <button onclick="dash.s1PlanOn=true;renderDash()" style="width:100%;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:600;border:none;background:var(--navy);color:#fff;font-family:inherit;cursor:pointer;">${tt.s1activate}</button>` : `
+              <div style="display:flex;align-items:center;gap:6px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span style="font-size:11.5px;font-weight:600;color:var(--green);">${tt.s1planActiveCap} <span dir="ltr">${fmt(dash.s1BudgetCap)}</span> ${tt.s1planActiveCap2}</span>
+              </div>`}
+            </div>` : ''}
+          </div>
+
+          <div style="background:var(--panel);border-radius:18px;padding:22px;box-shadow:var(--card-shadow);border:1px solid var(--border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;border-radius:10px;background:var(--panel-alt2);display:flex;align-items:center;justify-content:center;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 21H21" stroke="var(--text)" stroke-width="1.8" stroke-linecap="round"/><path d="M5 21V10L12 5L19 10V21" stroke="var(--text)" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 21V14H15V21" stroke="var(--text)" stroke-width="1.8"/></svg>
+                </div>
+                <div><div style="font-size:15px;font-weight:700;color:var(--text);">${tt.loanWidgetTitle}</div><div style="font-size:11px;color:var(--text-softer);">${tt.loanWidgetSub}</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px;background:rgba(63,166,114,0.15);border-radius:20px;padding:4px 10px;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span style="font-size:10px;font-weight:700;color:var(--green);">${tt.highApproval}</span>
+              </div>
+            </div>
+            <div style="display:flex;height:16px;border-radius:8px;overflow:hidden;margin-bottom:10px;">
+              <div style="width:${v.fixedPct}%;background:var(--text-soft);transition:width 0.3s;"></div>
+              <div style="width:${v.instPct}%;background:var(--terracotta);transition:width 0.3s;"></div>
+              <div style="width:${v.remainPct}%;background:var(--green);transition:width 0.3s;"></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px 16px;font-size:11.5px;margin-bottom:12px;">
+              <span style="display:flex;align-items:center;gap:5px;color:var(--text-soft);"><span style="width:8px;height:8px;border-radius:2px;background:var(--text-soft);display:inline-block;"></span>${tt.fixedLbl} <span dir="ltr" style="font-weight:700;color:var(--text);">6,200</span></span>
+              <span style="display:flex;align-items:center;gap:5px;color:var(--text-soft);"><span style="width:8px;height:8px;border-radius:2px;background:var(--terracotta);display:inline-block;"></span>${tt.installLbl} <span dir="ltr" style="font-weight:700;color:var(--terracotta);">${fmt(v.installment)}</span></span>
+              <span style="display:flex;align-items:center;gap:5px;color:var(--text-soft);"><span style="width:8px;height:8px;border-radius:2px;background:var(--green);display:inline-block;"></span>${tt.remainLbl2} <span dir="ltr" style="font-weight:700;color:var(--green);">${fmt(v.remaining)}</span></span>
+            </div>
+            <div style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-soft);margin-bottom:5px;"><span>${tt.loanAmtLbl}</span><span dir="ltr" style="font-weight:700;color:var(--text);">${fmt(dash.s2Amount)} ${tt.currency}</span></div>
+              ${rangeInput('dashLoanAmt',20000,300000,5000,dash.s2Amount,'dash.s2Amount=Number(this.value);renderDash()')}
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:14px;">
+              <button onclick="dash.s2Duration=36;renderDash()" style="flex:1;padding:6px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid var(--border2);background:${dash.s2Duration===36?'var(--navy)':'transparent'};color:${dash.s2Duration===36?'#fff':'var(--text)'};">${tt.dur36}</button>
+              <button onclick="dash.s2Duration=48;renderDash()" style="flex:1;padding:6px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid var(--border2);background:${dash.s2Duration===48?'var(--navy)':'transparent'};color:${dash.s2Duration===48?'#fff':'var(--text)'};">${tt.dur48}</button>
+              <button onclick="dash.s2Duration=60;renderDash()" style="flex:1;padding:6px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid var(--border2);background:${dash.s2Duration===60?'var(--navy)':'transparent'};color:${dash.s2Duration===60?'#fff':'var(--text)'};">${tt.dur60}</button>
+            </div>
+            ${dash.s2Applied ? `
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(63,166,114,0.15);border-radius:10px;padding:9px 12px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font-size:11.5px;color:var(--text);">${tt.loanAppliedShort} <span dir="ltr" style="font-weight:700;">224410</span></span>
+            </div>` : `
+            <button onclick="dash.s2Applied=true;renderDash()" style="width:100%;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:600;border:none;background:var(--terracotta);color:#fff;font-family:inherit;cursor:pointer;">${tt.applyBtn}</button>`}
+          </div>
+
+          <div style="background:var(--panel);border-radius:18px;padding:22px;box-shadow:0 2px 10px rgba(217,88,79,0.1);border:1px solid rgba(217,88,79,0.25);">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(217,88,79,0.16);display:flex;align-items:center;justify-content:center;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 2L3 6V11C3 16 6.8 20.4 12 22C17.2 20.4 21 16 21 11V6L12 2Z" stroke="var(--red)" stroke-width="2" stroke-linejoin="round"/><path d="M12 8V12.5" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.1" fill="var(--red)"/></svg>
+              </div>
+              <div><div style="font-size:15px;font-weight:700;color:var(--red);">${tt.suspTxn}</div><div style="font-size:11px;color:var(--text-softer);">${tt.fraudCard}</div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;background:var(--panel-alt2);border-radius:12px;padding:12px 13px;margin-bottom:14px;font-size:12px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-soft);">${tt.merchantLbl}</span><span style="color:var(--text);font-weight:600;">${tt.unknownMerchant}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-soft);">${tt.amountLbl}</span><span dir="ltr" style="color:var(--red);font-weight:700;">4,250.00 ${tt.currency}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-soft);">${tt.cardLbl}</span><span dir="ltr" style="color:var(--text);font-weight:600;letter-spacing:0.5px;">•••• 4821</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-soft);">${tt.locationLbl}</span><span style="color:var(--text);font-weight:600;">Jakarta, ID</span></div>
+            </div>
+            ${dash.s3Step===0 && !dash.s3ConfirmedOk ? `
+            <div style="display:flex;gap:8px;">
+              <button onclick="dash.s3Step=1;renderDash()" style="flex:1;padding:9px 6px;border-radius:10px;font-size:11.5px;font-weight:600;border:none;background:var(--red);color:#fff;font-family:inherit;cursor:pointer;">${tt.disputeBtn}</button>
+              <button onclick="dash.s3ConfirmedOk=true;renderDash()" style="flex:1;padding:9px 6px;border-radius:10px;font-size:11.5px;font-weight:600;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:inherit;cursor:pointer;">${tt.confirmBtnShort}</button>
+            </div>` : ''}
+            ${dash.s3Step===1 ? `
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;align-items:center;gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:11.5px;color:var(--text);">${tt.disputeFiled}</span></div>
+              <button onclick="dash.s3Step=2;renderDash()" style="width:100%;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:600;border:none;background:var(--navy);color:#fff;font-family:inherit;cursor:pointer;">${tt.freezeCardNow}</button>
+            </div>` : ''}
+            ${dash.s3Step===2 ? `
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <span style="display:flex;align-items:center;gap:4px;background:rgba(217,88,79,0.15);color:var(--red);font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;">${tt.cardFrozenBadge}</span>
+                <span style="display:flex;align-items:center;gap:4px;background:rgba(63,166,114,0.15);color:var(--green);font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;">${tt.caseOpenBadge}</span>
+              </div>
+              <button onclick="dash.s3Step=3;renderDash()" style="width:100%;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:600;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:inherit;cursor:pointer;">${tt.showCaseNum}</button>
+            </div>` : ''}
+            ${dash.s3Step===3 ? `
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <span style="display:flex;align-items:center;gap:4px;background:rgba(217,88,79,0.15);color:var(--red);font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;">${tt.cardFrozenBadge}</span>
+                <span style="display:flex;align-items:center;gap:4px;background:rgba(63,166,114,0.15);color:var(--green);font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;">${tt.caseOpenBadge}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;background:var(--panel-alt2);border-radius:10px;padding:9px 12px;">
+                <span style="font-size:11px;color:var(--text-soft);">${tt.caseNumLbl}</span><span dir="ltr" style="font-size:12.5px;font-weight:700;color:var(--text);">DSP-88213-2026</span>
+              </div>
+            </div>` : ''}
+            ${dash.s3ConfirmedOk ? `
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(63,166,114,0.15);border-radius:10px;padding:9px 12px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="font-size:11.5px;color:var(--text);">${tt.alertClosed}</span>
+            </div>` : ''}
+          </div>
+
+          <div style="background:var(--panel);border-radius:18px;padding:22px;box-shadow:var(--card-shadow);border:1px solid var(--border);display:flex;flex-direction:column;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(195,107,78,0.16);display:flex;align-items:center;justify-content:center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3L14.5 9L21 9.5L16 14L17.5 21L12 17.5L6.5 21L8 14L3 9.5L9.5 9L12 3Z" stroke="var(--terracotta)" stroke-width="1.8" stroke-linejoin="round"/></svg>
+              </div>
+              <div><div style="font-size:15px;font-weight:700;color:var(--text);">${tt.goalTitle}</div><div style="font-size:11px;color:var(--text-softer);">${tt.goalSub}</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:22px;">
+              <svg width="98" height="98" viewBox="0 0 98 98">
+                <circle cx="49" cy="49" r="42" stroke="var(--border2)" stroke-width="10" fill="none"/>
+                <circle cx="49" cy="49" r="42" stroke="var(--terracotta)" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="${jarOffset}" transform="rotate(-90 49 49)" style="transition:stroke-dashoffset 0.5s;"/>
+                <text x="49" y="45" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)" font-family="IBM Plex Sans Arabic">${jarPct}%</text>
+                <text x="49" y="62" text-anchor="middle" font-size="9.5" fill="var(--text-softer)" font-family="IBM Plex Sans Arabic">${tt.goalComplete}</text>
+              </svg>
+              <div style="flex:1;">
+                <div style="font-size:11px;color:var(--text-soft);">${tt.goalOfTarget}</div>
+                <div dir="ltr" style="font-size:17px;font-weight:700;color:var(--text);margin:3px 0 10px;">${fmt(dash.jarCurrent)} <span style="font-size:12px;font-weight:500;color:var(--text-softer);">/ ${fmt(dash.jarTarget)} ${tt.currency}</span></div>
+                ${jarFull ? `
+                <div style="font-size:12px;font-weight:600;color:var(--green);">${tt.jarGoalReached}</div>` : `
+                <button onclick="addToJar()" style="padding:8px 14px;border-radius:10px;font-size:11.5px;font-weight:600;border:none;background:var(--navy);color:#fff;font-family:inherit;cursor:pointer;">${tt.addToJar}</button>
+                ${dash.jarConfirm ? `<div style="margin-top:8px;font-size:11px;font-weight:600;color:var(--green);">${tt.jarAdded}</div>` : ''}`}
+              </div>
+            </div>
+            <div style="margin-top:14px;">
+              <button onclick="dash.jarShowDetail=!dash.jarShowDetail;renderDash()" style="background:none;border:none;color:var(--terracotta);font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;padding:0;">${dash.jarShowDetail?tt.detailHide:tt.detailShow}</button>
+              ${dash.jarShowDetail ? `
+              <div style="margin-top:8px;padding:11px 13px;background:var(--panel-alt2);border-radius:10px;font-size:11.5px;line-height:1.7;color:var(--text-soft);">
+                <div style="font-weight:700;color:var(--text);margin-bottom:6px;">${tt.goalDetailTitle}</div>
+                <div>${tt.goalDetail1}</div>
+                <div style="margin-top:4px;">${tt.goalDetail2}</div>
+                <div style="margin-top:4px;">${tt.goalDetail3}</div>
+              </div>` : ''}
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div style="width:400px;flex-shrink:0;background:var(--panel);border-radius:18px;box-shadow:var(--card-shadow);border:1px solid var(--border);overflow:hidden;">${chatPanelHTML()}</div>
+    </div>`;
+  }
+
+  else if(dash.view==='accounts'){
+    const acc = ACC[dash.selectedAcc];
+    body.innerHTML = `
+    <div style="flex:1;padding:28px 32px;overflow-y:auto;height:100%;">
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:18px;">${tt.accountsTitle}</div>
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:720px;">
+        ${[1,2].map(id=>{ const a=ACC[id]; const sel=dash.selectedAcc===id;
+          return `<div onclick="dash.selectedAcc=${id};renderDash()" style="cursor:pointer;background:var(--panel);border-radius:16px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;border:1.5px solid ${sel?'var(--terracotta)':'var(--border)'};box-shadow:var(--card-shadow);">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="width:42px;height:42px;border-radius:11px;background:${id===1?'var(--panel-alt2)':'rgba(195,107,78,0.16)'};display:flex;align-items:center;justify-content:center;font-size:16px;">${id===1?'💳':'💰'}</div>
+              <div><div style="font-size:14px;font-weight:700;color:var(--text);">${a.name}</div><div dir="ltr" style="font-size:11.5px;color:var(--text-softer);margin-top:2px;">SA •• •••• •••• ${a.iban.slice(-4)}</div></div>
+            </div>
+            <div dir="ltr" style="font-size:15px;font-weight:700;color:var(--text);">${fmt(a.balance)} <span style="font-size:11px;color:var(--text-softer);font-weight:500;">${tt.currency}</span></div>
+          </div>`; }).join('')}
+      </div>
+
+      <div style="max-width:720px;margin-top:18px;background:var(--panel);border-radius:16px;padding:20px;box-shadow:var(--card-shadow);">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">${tt.accDetailTitle} ${acc.name}</div>
+        <div style="display:flex;flex-direction:column;gap:9px;font-size:12.5px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--text-soft);">${tt.ibanLbl}</span><span style="display:flex;align-items:center;gap:8px;"><span dir="ltr" style="color:var(--text);font-weight:600;">${acc.iban}</span><button onclick="copyIban('${acc.iban}')" style="font-size:10.5px;font-weight:600;color:var(--terracotta);background:none;border:1px solid var(--border2);border-radius:8px;padding:3px 8px;cursor:pointer;font-family:inherit;">${tt.copyIban}</button></span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-soft);">${tt.availBalanceLbl}</span><span dir="ltr" style="color:var(--text);font-weight:600;">${fmt(acc.balance)} ${tt.currency}</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-soft);">${tt.lastTxnLbl}</span><span style="color:var(--text);font-weight:600;">${acc.lastTxn}</span></div>
+        </div>
+      </div>
+
+      <div style="max-width:720px;margin-top:18px;background:var(--panel);border-radius:16px;padding:20px;box-shadow:var(--card-shadow);">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;">${tt.historyTitle}</div>
+        <div style="display:flex;flex-direction:column;">
+          ${acc.history.map((txn,i)=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;${i<acc.history.length-1?'border-bottom:1px solid var(--border);':''}">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:34px;height:34px;border-radius:9px;background:${txn.iconBg};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${txn.icon}</div>
+              <div><div style="font-size:12.5px;font-weight:600;color:var(--text);">${txn.title}</div><div style="font-size:11px;color:var(--text-softer);margin-top:2px;">${txn.time}</div></div>
+            </div>
+            <div dir="ltr" style="font-size:13px;font-weight:700;color:${txn.amountColor};">${txn.amount} ${tt.currency}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  else if(dash.view==='transfers'){
+    const balance = ACC[1].balance;
+    body.innerHTML = `
+    <div style="flex:1;padding:28px 32px;overflow-y:auto;height:100%;">
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:18px;">${tt.transferTitle}</div>
+      <div style="max-width:480px;background:var(--panel);border-radius:18px;padding:24px;box-shadow:var(--card-shadow);">
+        ${!dash.transferDone ? `
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div style="font-size:11.5px;color:var(--text-soft);margin-bottom:6px;">${tt.fromAccLbl}</div>
+            <div style="background:var(--panel-alt2);border-radius:10px;padding:11px 14px;font-size:13px;color:var(--text);font-weight:600;display:flex;justify-content:space-between;">
+              <span>${tt.checking} — •••• 7734</span><span dir="ltr" style="color:var(--text-soft);font-weight:500;">${fmt(balance)} ${tt.currency}</span>
+            </div>
+            <div style="font-size:10.5px;color:var(--text-softer);margin-top:5px;">${tt.availableBalanceHint}: <span dir="ltr">${fmt(balance)} ${tt.currency}</span></div>
+          </div>
+          <div>
+            <div style="font-size:11.5px;color:var(--text-soft);margin-bottom:6px;">${tt.toAccLbl}</div>
+            <input class="mzText" value="${dash.transferTo}" oninput="dash.transferTo=this.value" placeholder="${tt.toPlaceholder}" dir="ltr"/>
+          </div>
+          <div>
+            <div style="font-size:11.5px;color:var(--text-soft);margin-bottom:6px;">${tt.amountRialLbl}</div>
+            <input class="mzText" value="${dash.transferAmount}" oninput="dash.transferAmount=this.value" placeholder="${tt.amtPlaceholder}" dir="ltr"/>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:var(--panel-alt2);border-radius:10px;padding:10px 14px;font-size:11.5px;">
+            <span style="color:var(--text-soft);">${tt.transferType}</span><span style="color:var(--text);font-weight:600;">${tt.typeInstant}</span>
+          </div>
+          <div style="font-size:10.5px;color:var(--text-softer);margin-top:-8px;">${tt.feeNote}</div>
+          ${dash.transferError ? `<div class="errMsg"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--red)" stroke-width="2"/><path d="M12 8V13" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1" fill="var(--red)"/></svg>${dash.transferError}</div>` : ''}
+          <button onclick="submitTransfer()" style="width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:700;border:none;background:var(--terracotta);color:#fff;font-family:inherit;cursor:pointer;margin-top:6px;">${tt.confirmTransferBtn}</button>
+        </div>` : `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 0;">
+          <div style="width:52px;height:52px;border-radius:50%;background:rgba(63,166,114,0.15);display:flex;align-items:center;justify-content:center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);">${tt.transferSuccess}</div>
+          <div dir="ltr" style="font-size:20px;font-weight:700;color:var(--text);">${fmt(dash.transferAmount)} <span style="font-size:12px;color:var(--text-softer);font-weight:500;">${tt.currency}</span></div>
+          <div style="width:100%;background:var(--panel-alt2);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;font-size:11.5px;">
+            <span style="color:var(--text-soft);">${tt.txnRefLbl}</span><span dir="ltr" style="font-weight:700;color:var(--text);">TRX-${dash.transferRef}</span>
+          </div>
+          <button onclick="resetTransfer()" style="width:100%;padding:11px;border-radius:10px;font-size:12.5px;font-weight:600;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:inherit;cursor:pointer;">${tt.newTransferBtn}</button>
+        </div>`}
+      </div>
+    </div>`;
+  }
+
+  else if(dash.view==='cards'){
+    const limit = 20000, used = 4250;
+    body.innerHTML = `
+    <div style="flex:1;padding:28px 32px;overflow-y:auto;height:100%;">
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:18px;">${tt.cardsTitle}</div>
+      <div style="max-width:520px;">
+        <div style="background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:18px;padding:24px;color:#fff;position:relative;overflow:hidden;margin-bottom:18px;">
+          <div style="position:absolute;top:-40px;${dirOf()==='rtl'?'left':'right'}:-40px;width:160px;height:160px;border-radius:50%;background:rgba(195,107,78,0.2);"></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;position:relative;">
+            <div style="font-size:13px;font-weight:600;opacity:0.85;">${tt.cardIssuer}</div>
+            <div style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:${dash.cardFrozen?'rgba(217,88,79,0.3)':'rgba(63,166,114,0.3)'};color:${dash.cardFrozen?'#ffb3ac':'#a8e6c1'};">${dash.cardFrozen?tt.cardFrozenLbl:tt.cardActive}</div>
+          </div>
+          <div dir="ltr" style="font-size:19px;letter-spacing:3px;font-weight:600;margin-bottom:18px;position:relative;">•••• •••• •••• 4821</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;position:relative;">
+            <div><div style="font-size:9.5px;opacity:0.6;">${tt.cardHolderLbl}</div><div style="font-size:12.5px;font-weight:600;margin-top:2px;">${tt.cardHolderName}</div></div>
+            <div><div style="font-size:9.5px;opacity:0.6;">${tt.expiresLbl}</div><div style="font-size:12.5px;font-weight:600;margin-top:2px;">${tt.expiresVal}</div></div>
+          </div>
+        </div>
+
+        <div style="background:var(--panel);border-radius:16px;padding:20px;box-shadow:var(--card-shadow);margin-bottom:18px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-soft);margin-bottom:8px;"><span>${tt.creditLimitLbl}</span><span dir="ltr">${fmt(used)} / ${fmt(limit)} ${tt.currency}</span></div>
+          <div style="height:8px;border-radius:4px;background:var(--border2);overflow:hidden;margin-bottom:14px;"><div style="height:100%;width:${(used/limit*100).toFixed(0)}%;background:var(--terracotta);border-radius:4px;"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-soft);"><span>${tt.dueDateLbl}</span><span style="color:var(--text);font-weight:600;">${tt.dueDateVal}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-soft);margin-top:6px;"><span>${tt.minDueLbl}</span><span dir="ltr" style="color:var(--text);font-weight:600;">212.50 ${tt.currency}</span></div>
+        </div>
+
+        <div style="background:var(--panel);border-radius:16px;padding:20px;box-shadow:var(--card-shadow);">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;">${tt.cardMgmtTitle}</div>
+          <button onclick="dash.cardFrozen=!dash.cardFrozen;renderDash()" style="width:100%;padding:11px;border-radius:10px;font-size:12.5px;font-weight:600;border:none;background:${dash.cardFrozen?'var(--navy)':'var(--red)'};color:#fff;font-family:inherit;cursor:pointer;">${dash.cardFrozen?tt.unfreezeCardBtn:tt.freezeCardBtn}</button>
+          <div style="margin-top:12px;display:flex;gap:10px;background:var(--panel-alt2);border-radius:12px;padding:12px 14px;">
+            <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--terracotta),var(--navy));display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="color:#fff;font-weight:700;font-size:13px;">م</span></div>
+            <div style="font-size:12px;line-height:1.6;color:var(--text);">${dash.cardFrozen?tt.cardFrozenNote:tt.cardActiveNote}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  else if(dash.view==='assistant'){
+    body.innerHTML = `<div style="flex:1;display:flex;justify-content:center;padding:28px 32px;overflow:hidden;height:100%;">
+      <div style="width:100%;max-width:760px;background:var(--panel);border-radius:18px;box-shadow:var(--card-shadow);border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+        ${chatPanelHTML()}
+      </div>
+    </div>`;
+  }
+
+  if(dash.view==='dashboard' || dash.view==='assistant'){
+    renderLiveChatLog();
+  }
+}
+
+/* ============================================================
+   LIVE CHAT — calls the /api/chat serverless proxy (real Claude API,
+   key stays server-side, never in this file or the browser)
+   ============================================================ */
+let liveChatHistory = []; // [{role:'user'|'assistant', content: string}]
+
+function renderLiveChatLog(){
+  const log = document.getElementById('liveChatLog');
+  if(!log) return;
+  log.innerHTML = liveChatHistory.map(m => {
+    if(m.role === 'user'){
+      return `<div style="align-self:flex-end;max-width:82%;background:var(--navy);border-radius:14px 14px 3px 14px;padding:12px 15px;"><div style="font-size:13.5px;color:#fff;">${escapeHtml(m.content)}</div></div>`;
+    }
+    if(m.role === 'typing'){
+      return `<div style="align-self:flex-start;max-width:60%;background:var(--panel);border-radius:14px 14px 14px 3px;padding:12px 15px;box-shadow:0 1px 2px rgba(0,0,0,0.05);border:1px solid var(--border);opacity:0.6;font-style:italic;"><div style="font-size:13.5px;color:var(--text);">${m.content}</div></div>`;
+    }
+    if(m.role === 'error'){
+      return `<div style="align-self:flex-start;max-width:88%;background:rgba(217,88,79,0.1);border-radius:14px 14px 14px 3px;padding:12px 15px;border:1px solid rgba(217,88,79,0.3);"><div style="font-size:13px;color:var(--red);">${escapeHtml(m.content)}</div></div>`;
+    }
+    return `<div style="align-self:flex-start;max-width:88%;background:var(--panel);border-radius:14px 14px 14px 3px;padding:12px 15px;box-shadow:0 1px 2px rgba(0,0,0,0.05);border:1px solid var(--border);"><div style="font-size:13.5px;line-height:1.7;color:var(--text);">${escapeHtml(m.content)}</div></div>`;
+  }).join('');
+  const container = log.parentElement;
+  if(container) container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function sendLiveChat(){
+  const input = document.getElementById('liveChatInput');
+  if(!input) return;
+  const msg = input.value.trim();
+  if(!msg) return;
+  input.value = '';
+
+  liveChatHistory.push({ role:'user', content: msg });
+  liveChatHistory.push({ role:'typing', content: appState.lang==='en' ? 'Muawen is typing…' : 'معاون يكتب...' });
+  renderLiveChatLog();
+
+  try{
+    const historyForApi = liveChatHistory
+      .filter(m => m.role==='user' || m.role==='assistant')
+      .slice(0, -0) // keep all so far (typing entry not included since filtered)
+      .map(m => ({ role:m.role, content:m.content }));
+    // remove the just-pushed user message from history payload duplication —
+    // server appends `message` itself, so history should be everything BEFORE it
+    historyForApi.pop();
+
+    const res = await fetch('/api/chat', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ message: msg, lang: appState.lang, history: historyForApi })
+    });
+    const data = await res.json();
+
+    liveChatHistory = liveChatHistory.filter(m => m.role !== 'typing');
+
+    if(!res.ok){
+      liveChatHistory.push({ role:'error', content: data.error || 'Request failed.' });
+    } else {
+      liveChatHistory.push({ role:'assistant', content: data.reply });
+    }
+  } catch(err){
+    liveChatHistory = liveChatHistory.filter(m => m.role !== 'typing');
+    liveChatHistory.push({ role:'error', content: appState.lang==='en' ? 'Connection error. Please try again.' : 'حدث خطأ في الاتصال. حاول مجدداً.' });
+    console.error(err);
+  }
+  renderLiveChatLog();
+}
+
+function copyIban(iban){
+  navigator.clipboard?.writeText(iban).catch(()=>{});
+  const tt=t(); alert(tt.copied);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function renderAll(){
+  document.documentElement.dir = dirOf();
+  document.getElementById('langBtn').textContent = t().langBtnLabel;
+  document.getElementById('themeBtn').textContent = appState.theme==='light' ? t().themeLight : t().themeDark;
+  renderDashShell();
+  renderDash();
+}
+document.documentElement.setAttribute('data-theme','light');
+renderAll();
+</script>
+</body>
+</html>
